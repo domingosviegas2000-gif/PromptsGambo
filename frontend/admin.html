@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel Admin — PromptsGambo</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- NAVBAR ADMIN -->
+  <nav class="navbar admin-nav">
+    <div class="logo">⚡ PromptsGambo <span class="admin-badge">ADMIN</span></div>
+    <div class="nav-links">
+      <a href="#prompts" onclick="mostrarSecao('prompts')">Prompts</a>
+      <a href="#utilizadores" onclick="mostrarSecao('utilizadores')">Utilizadores</a>
+      <a href="#pagamentos" onclick="mostrarSecao('pagamentos')">Pagamentos</a>
+    </div>
+    <div class="nav-auth">
+      <button class="btn-login" onclick="logoutAdmin()">Sair</button>
+    </div>
+  </nav>
+
+  <div class="dashboard">
+
+    <!-- ESTATISTICAS -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-numero" id="total-utilizadores">0</div>
+        <div class="stat-label">Utilizadores</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-numero" id="total-premium">0</div>
+        <div class="stat-label">Premium</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-numero" id="total-prompts">0</div>
+        <div class="stat-label">Prompts</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-numero" id="total-receita">0€</div>
+        <div class="stat-label">Receita Total</div>
+      </div>
+    </div>
+
+    <!-- SECAO PROMPTS -->
+    <div class="admin-secao" id="secao-prompts">
+      <div class="secao-header">
+        <h3>Gerir Prompts</h3>
+        <button class="btn-add" onclick="abrirModalPrompt()">+ Adicionar Prompt</button>
+      </div>
+
+      <div class="admin-tabela">
+        <div class="tabela-header">
+          <span>Titulo</span>
+          <span>Categoria</span>
+          <span>Tipo</span>
+          <span>Acoes</span>
+        </div>
+        <div id="lista-prompts-admin">
+          <!-- Preenchido pelo admin.js -->
+        </div>
+      </div>
+    </div>
+
+    <!-- SECAO UTILIZADORES -->
+    <div class="admin-secao" id="secao-utilizadores" style="display:none">
+      <div class="secao-header">
+        <h3>Gerir Utilizadores</h3>
+      </div>
+      <div class="admin-tabela">
+        <div class="tabela-header">
+          <span>Nome</span>
+          <span>Email</span>
+          <span>Plano</span>
+          <span>Acoes</span>
+        </div>
+        <div id="lista-utilizadores-admin">
+          <!-- Preenchido pelo admin.js -->
+        </div>
+      </div>
+    </div>
+
+    <!-- SECAO PAGAMENTOS -->
+    <div class="admin-secao" id="secao-pagamentos" style="display:none">
+      <div class="secao-header">
+        <h3>Historico de Pagamentos</h3>
+      </div>
+      <div class="admin-tabela">
+        <div class="tabela-header">
+          <span>Utilizador</span>
+          <span>Plano</span>
+          <span>Metodo</span>
+          <span>Valor</span>
+          <span>Data</span>
+          <span>Estado</span>
+        </div>
+        <div id="lista-pagamentos-admin">
+          <!-- Preenchido pelo admin.js -->
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- MODAL ADICIONAR/EDITAR PROMPT -->
+  <div class="modal" id="modal-prompt">
+    <div class="modal-box">
+      <button class="fechar" onclick="fecharModal()">X</button>
+      <h2 id="modal-titulo">Adicionar Prompt</h2>
+
+      <input type="text" placeholder="Titulo do prompt" id="prompt-titulo">
+      <textarea placeholder="Texto do prompt" id="prompt-texto" rows="4"></textarea>
+      <input type="text" placeholder="Emoji (ex: 🌲)" id="prompt-emoji">
+
+      <select id="prompt-categoria">
+        <option value="">Seleciona categoria</option>
+        <option value="Natureza">🌿 Natureza</option>
+        <option value="Fantasia">🧙 Fantasia</option>
+        <option value="Urbano">🏙️ Urbano</option>
+        <option value="Pessoas">👤 Pessoas</option>
+        <option value="Animais">🐾 Animais</option>
+        <option value="Espaco">🚀 Espaco</option>
+      </select>
+
+      <div class="toggle-premium">
+        <label>Prompt Premium?</label>
+        <input type="checkbox" id="prompt-premium">
+      </div>
+
+      <button class="btn-submit" onclick="guardarPrompt()">Guardar Prompt</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay" onclick="fecharModal()"></div>
+
+  <script src="admin.js"></script>
+</body>
+</html>
