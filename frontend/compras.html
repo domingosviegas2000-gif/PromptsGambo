@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minhas Compras — PromptsGambo</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="logo">⚡ PromptsGambo</div>
+    <div class="nav-links">
+      <a href="prompt.html">Prompts</a>
+      <a href="cliente.html">Minha Area</a>
+    </div>
+    <div class="nav-auth">
+      <span class="user-nome" id="user-nome">Ola</span>
+      <button class="btn-login" onclick="logout()">Sair</button>
+    </div>
+  </nav>
+
+  <div class="pagina-header">
+    <h1>Minhas Compras</h1>
+    <p>Historico de subscricoes e pagamentos</p>
+  </div>
+
+  <div class="dashboard">
+    <div class="subscricao-ativa">
+      <div class="sub-icon">⚡</div>
+      <div class="sub-info">
+        <h3>Plano Ativo: <span id="plano-ativo">Gratis</span></h3>
+        <p id="plano-validade">Sem data de expiracao</p>
+      </div>
+      <a href="checkout.html?plano=premium"><button class="btn-upgrade">Fazer Upgrade</button></a>
+    </div>
+
+    <div class="historico-section">
+      <h3>Historico de Pagamentos</h3>
+      <div class="historico-vazio" id="historico-vazio">
+        <div class="vazio-icon">🛒</div>
+        <p>Ainda nao fizeste nenhuma compra</p>
+        <a href="checkout.html?plano=premium"><button class="btn-submit">Ver Planos</button></a>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <p>© 2024 PromptsGambo. Todos os direitos reservados.</p>
+  </footer>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minha Area — PromptsGambo</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="logo">⚡ PromptsGambo</div>
+    <div class="nav-links">
+      <a href="prompt.html">Prompts</a>
+      <a href="compras.html">Minhas Compras</a>
+    </div>
+    <div class="nav-auth">
+      <span class="user-nome" id="user-nome">Ola, Utilizador</span>
+      <button class="btn-login" onclick="logout()">Sair</button>
+    </div>
+  </nav>
+
+  <div class="dashboard">
+    <div class="user-card">
+      <div class="user-avatar">👤</div>
+      <div class="user-info">
+        <h2 id="user-nome-display">Nome</h2>
+        <p id="user-email-display">email@exemplo.com</p>
+        <span class="user-plano" id="user-plano">Plano Gratis</span>
+      </div>
+      <button class="btn-upgrade" onclick="window.location.href='checkout.html?plano=premium'">⚡ Upgrade Premium</button>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-numero" id="total-copiados">0</div><div class="stat-label">Prompts Copiados</div></div>
+      <div class="stat-card"><div class="stat-numero" id="total-favoritos">0</div><div class="stat-label">Favoritos</div></div>
+      <div class="stat-card"><div class="stat-numero" id="dias-membro">0</div><div class="stat-label">Dias como Membro</div></div>
+    </div>
+
+    <div class="acoes-rapidas">
+      <h3>Acoes Rapidas</h3>
+      <div class="acoes-grid">
+        <a href="prompt.html" class="acao-card"><div class="acao-icon">🎨</div><span>Ver Prompts</span></a>
+        <a href="compras.html" class="acao-card"><div class="acao-icon">🛒</div><span>Compras</span></a>
+        <a href="checkout.html?plano=premium" class="acao-card"><div class="acao-icon">⚡</div><span>Upgrade</span></a>
+        <a href="#" class="acao-card" onclick="logout()"><div class="acao-icon">🚪</div><span>Sair</span></a>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <p>© 2024 PromptsGambo. Todos os direitos reservados.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

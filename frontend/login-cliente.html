@@ -7,30 +7,18 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="pagina-auth">
-
   <div class="auth-box">
-    <a href="index.html" class="logo-center">⚡ PromptsGambo</a>
+    <a href="../index.html" class="logo-center">⚡ PromptsGambo</a>
     <h2>Bem-vindo de volta!</h2>
     <p class="auth-sub">Entra na tua conta</p>
-
     <input type="email" placeholder="Email" id="email">
     <input type="password" placeholder="Password" id="password">
-
-    <div class="esqueci">
-      <a href="#">Esqueceste a password?</a>
-    </div>
-
+    <div class="esqueci"><a href="#">Esqueceste a password?</a></div>
     <button class="btn-submit" onclick="loginCliente()">Entrar</button>
-
     <div class="auth-divider">ou</div>
-
-    <button class="btn-google" onclick="loginGoogle()">
-      🌐 Continuar com Google
-    </button>
-
+    <button class="btn-google" onclick="loginGoogle()">🌐 Continuar com Google</button>
     <p class="auth-link">Nao tens conta? <a href="cadastro.html">Regista-te gratis</a></p>
   </div>
-
   <script type="module" src="firebase.js"></script>
 </body>
 </html>

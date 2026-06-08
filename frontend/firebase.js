@@ -20,11 +20,9 @@ window.registar = async function() {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
   const confirmar = document.getElementById("confirmar").value;
-
   if (!nome || !email || !password || !confirmar) { alert("Preenche todos os campos!"); return; }
   if (password !== confirmar) { alert("As passwords nao coincidem!"); return; }
   if (password.length < 6) { alert("Minimo 6 caracteres!"); return; }
-
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     await setDoc(doc(db, "utilizadores", userCredential.user.uid), {
@@ -33,7 +31,11 @@ window.registar = async function() {
     alert("Conta criada com sucesso!");
     window.location.href = "cliente.html";
   } catch (erro) {
-    alert("Erro: " + erro.message);
+    if (erro.code === "auth/email-already-in-use") {
+      alert("Este email ja esta em uso!");
+    } else {
+      alert("Erro: " + erro.message);
+    }
   }
 }
 
@@ -41,7 +43,6 @@ window.loginCliente = async function() {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
   if (!email || !password) { alert("Preenche todos os campos!"); return; }
-
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const docSnap = await getDoc(doc(db, "utilizadores", userCredential.user.uid));
@@ -60,7 +61,6 @@ window.loginAdmin = async function() {
   const email = document.getElementById("admin-email").value;
   const password = document.getElementById("admin-password").value;
   if (!email || !password) { alert("Preenche todos os campos!"); return; }
-
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const docSnap = await getDoc(doc(db, "utilizadores", userCredential.user.uid));
@@ -80,8 +80,11 @@ window.logout = async function() {
   await signOut(auth);
   localStorage.removeItem("utilizador");
   localStorage.removeItem("premium");
-  window.location.href = "index.html";
+  window.location.href = "../index.html";
 }
+
+window.registarGoogle = function() { alert("Login com Google em breve!"); }
+window.loginGoogle = function() { alert("Login com Google em breve!"); }
 
 onAuthStateChanged(auth, async (user) => {
   if (user) {
