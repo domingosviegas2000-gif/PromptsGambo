@@ -9,7 +9,7 @@ admin_html = '''<!DOCTYPE html>
 <body>
 
   <nav class="navbar admin-nav">
-    <div class="logo">⚡ PromptsGambo <span class="admin-badge">ADMIN</span></div>
+    <div class="logo">PromptsGambo <span class="admin-badge">ADMIN</span></div>
     <div class="nav-links">
       <a href="#" onclick="mostrarSecao('prompts')">Prompts</a>
       <a href="#" onclick="mostrarSecao('categorias')">Categorias</a>
@@ -24,12 +24,11 @@ admin_html = '''<!DOCTYPE html>
 
   <div class="dashboard">
 
-    <!-- STATS -->
     <div class="stats-grid">
       <div class="stat-card"><div class="stat-numero" id="total-utilizadores">0</div><div class="stat-label">Utilizadores</div></div>
       <div class="stat-card"><div class="stat-numero" id="total-premium">0</div><div class="stat-label">Premium</div></div>
       <div class="stat-card"><div class="stat-numero" id="total-prompts">0</div><div class="stat-label">Prompts</div></div>
-      <div class="stat-card"><div class="stat-numero" id="total-receita">0$</div><div class="stat-label">Receita</div></div>
+      <div class="stat-card"><div class="stat-numero" id="total-receita">$0</div><div class="stat-label">Receita</div></div>
     </div>
 
     <!-- PROMPTS -->
@@ -38,9 +37,9 @@ admin_html = '''<!DOCTYPE html>
         <h3>Gerir Prompts</h3>
         <div style="display:flex; gap:10px; flex-wrap:wrap;">
           <button class="btn-add" onclick="abrirModalPrompt()">+ Adicionar</button>
-          <button class="btn-add" style="background:linear-gradient(90deg,#2563eb,#A855F7)" onclick="exportarJSON()">📥 Exportar JSON</button>
+          <button class="btn-add" style="background:linear-gradient(90deg,#2563eb,#A855F7)" onclick="exportarJSON()">Exportar JSON</button>
           <label class="btn-add" style="background:linear-gradient(90deg,#15803d,#A855F7); cursor:pointer;">
-            📤 Importar JSON
+            Importar JSON
             <input type="file" accept=".json" onchange="importarJSON(event)" style="display:none;">
           </label>
         </div>
@@ -57,7 +56,10 @@ admin_html = '''<!DOCTYPE html>
         <h3>Gerir Categorias</h3>
         <button class="btn-add" onclick="abrirModalCategoria()">+ Adicionar</button>
       </div>
-      <div id="lista-categorias"></div>
+      <div class="admin-tabela">
+        <div class="tabela-header" style="grid-template-columns:1fr 1fr 1fr;"><span>Categoria</span><span>Prompts</span><span>Acoes</span></div>
+        <div id="lista-categorias"></div>
+      </div>
     </div>
 
     <!-- UTILIZADORES -->
@@ -82,8 +84,8 @@ admin_html = '''<!DOCTYPE html>
     <div class="admin-secao" id="secao-monetizacao" style="display:none">
       <div class="secao-header"><h3>Configurar Monetizacao</h3></div>
       <div class="auth-box" style="max-width:600px; margin:0;">
-        <h3 style="margin-bottom:20px; font-size:16px;">📢 Anuncios</h3>
-        <label style="color:#aaa; font-size:14px; display:block; margin-bottom:8px;">Codigo do Banner (Google AdSense ou outro)</label>
+        <h3 style="margin-bottom:20px; font-size:16px;">Anuncios</h3>
+        <label style="color:#aaa; font-size:14px; display:block; margin-bottom:8px;">Codigo do Banner</label>
         <textarea id="codigo-anuncio" rows="4" placeholder="Cole aqui o codigo do anuncio..."></textarea>
         <label style="color:#aaa; font-size:14px; display:block; margin-bottom:8px; margin-top:10px;">Posicao do Anuncio</label>
         <select id="posicao-anuncio">
@@ -95,8 +97,8 @@ admin_html = '''<!DOCTYPE html>
 
         <hr style="border-color:rgba(45,45,58,0.5); margin:25px 0;">
 
-        <h3 style="margin-bottom:20px; font-size:16px;">🔗 Links de Afiliado</h3>
-        <input type="text" placeholder="Nome do produto afiliado" id="afiliado-nome">
+        <h3 style="margin-bottom:20px; font-size:16px;">Links de Afiliado</h3>
+        <input type="text" placeholder="Nome do produto" id="afiliado-nome">
         <input type="url" placeholder="Link de afiliado" id="afiliado-link">
         <input type="text" placeholder="Comissao (ex: 20%)" id="afiliado-comissao">
         <button class="btn-submit" onclick="guardarAfiliado()">Adicionar Link</button>
@@ -109,7 +111,7 @@ admin_html = '''<!DOCTYPE html>
   <!-- MODAL PROMPT -->
   <div class="modal" id="modal-prompt">
     <div class="modal-box" style="max-height:90vh; overflow-y:auto;">
-      <button class="fechar" onclick="fecharModal()">✕</button>
+      <button class="fechar" onclick="fecharModal()">X</button>
       <h2 id="modal-titulo">Adicionar Prompt</h2>
       <input type="text" placeholder="Titulo" id="prompt-titulo">
       <textarea placeholder="Texto do prompt" id="prompt-texto" rows="3"></textarea>
@@ -120,7 +122,7 @@ admin_html = '''<!DOCTYPE html>
       </select>
       <input type="number" placeholder="Preco em USD (0 = gratis)" id="prompt-preco" step="0.01" min="0">
       <label style="color:#aaa; font-size:14px; display:block; margin-bottom:8px;">Imagem do Prompt</label>
-      <input type="file" accept="image/*" id="prompt-imagem" onchange="previewImagem(this)">
+      <input type="file" accept="image/*" id="prompt-imagem" onchange="previewImagem(this)" style="color:#aaa;">
       <img id="imagem-preview" style="width:100%; border-radius:8px; margin:10px 0; display:none;">
       <input type="url" placeholder="Ou cole o URL da imagem" id="prompt-imagem-url" oninput="previewUrl(this)">
       <div class="toggle-premium">
@@ -134,7 +136,7 @@ admin_html = '''<!DOCTYPE html>
   <!-- MODAL CATEGORIA -->
   <div class="modal" id="modal-categoria">
     <div class="modal-box">
-      <button class="fechar" onclick="fecharModalCategoria()">✕</button>
+      <button class="fechar" onclick="fecharModalCategoria()">X</button>
       <h2 id="modal-cat-titulo">Adicionar Categoria</h2>
       <input type="text" placeholder="Nome da categoria" id="cat-nome">
       <input type="text" placeholder="Emoji (ex: 🌿)" id="cat-emoji">
@@ -144,12 +146,11 @@ admin_html = '''<!DOCTYPE html>
 
   <div class="overlay" id="overlay" onclick="fecharModal(); fecharModalCategoria();"></div>
 
-  <script src="admin.js"></script>
-  <script type="module" src="firebase.js"></script>
+  <script type="module" src="admin.js"></script>
 </body>
 </html>'''
 
 with open("prompts-ia-site/frontend/admin.html", "w") as f:
     f.write(admin_html)
 
-print("✅ admin.html criado!")
+print("✅ admin.html atualizado!")
