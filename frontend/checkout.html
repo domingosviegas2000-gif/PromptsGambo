@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+checkout_html = '''<!DOCTYPE html>
 <html lang="pt">
 <head>
   <meta charset="UTF-8">
@@ -13,19 +13,21 @@
 
     <div class="resumo-plano">
       <div class="resumo-linha"><span>Plano</span><span id="plano-nome">Premium</span></div>
-      <div class="resumo-linha"><span>Preco</span><span id="plano-preco">9.99€/mes</span></div>
-      <div class="resumo-linha total"><span>Total</span><span id="plano-total">9.99€</span></div>
+      <div class="resumo-linha"><span>Preco (USD)</span><span id="plano-preco">$9.99/mes</span></div>
+      <div class="resumo-linha"><span>Cambio atual</span><span id="cambio-rate" style="color:#A855F7;">A carregar...</span></div>
+      <div class="resumo-linha total"><span>Total</span><span id="plano-total">$9.99</span></div>
+      <div class="resumo-linha"><span>Total (Kwanza)</span><span id="plano-kwanza" class="preco-kwanza">A calcular...</span></div>
     </div>
 
     <h3 class="metodo-titulo">Metodo de pagamento</h3>
     <div class="metodos-grid">
       <div class="metodo-card" onclick="selecionarMetodo(this, 'visa')">
         <div class="metodo-icon">💳</div>
-        <div class="metodo-info"><strong>Cartao Visa</strong><span>Visa, Mastercard</span></div>
+        <div class="metodo-info"><strong>Cartao Visa</strong><span>Pagamento em USD</span></div>
       </div>
       <div class="metodo-card" onclick="selecionarMetodo(this, 'multicaixa')">
         <div class="metodo-icon">📱</div>
-        <div class="metodo-info"><strong>Multicaixa Express</strong><span>Pagamento pelo telemovel</span></div>
+        <div class="metodo-info"><strong>Multicaixa Express</strong><span>Pagamento em Kwanza (AOA)</span></div>
       </div>
       <div class="metodo-card" onclick="selecionarMetodo(this, 'binance')">
         <div class="metodo-icon">🟡</div>
@@ -35,7 +37,7 @@
 
     <div class="metodo-detalhes" id="detalhes-visa" style="display:none">
       <input type="text" placeholder="Nome no cartao" id="card-nome">
-      <input type="text" placeholder="Numero do cartao" id="card-numero" maxlength="19">
+      <input type="text" placeholder="Numero do cartao" id="card-numero" maxlength="19" oninput="formatarCartao(this)">
       <div class="card-linha">
         <input type="text" placeholder="MM/AA" id="card-validade" maxlength="5">
         <input type="text" placeholder="CVV" id="card-cvv" maxlength="3">
@@ -49,7 +51,10 @@
           <div class="step"><div class="step-num">2</div><p>Recebes notificacao no telemovel</p></div>
           <div class="step"><div class="step-num">3</div><p>Confirmas com o teu PIN</p></div>
         </div>
-        <input type="tel" placeholder="Numero de telemovel (9XX XXX XXX)" id="multicaixa-numero" maxlength="13">
+        <input type="tel" placeholder="Numero (9XX XXX XXX)" id="multicaixa-numero" maxlength="13">
+        <div style="text-align:center; color:#A855F7; font-size:14px; margin-top:10px;">
+          Total a pagar: <strong id="total-kwanza-checkout">A calcular...</strong>
+        </div>
       </div>
     </div>
 
@@ -57,13 +62,206 @@
       <div class="binance-info">
         <p>🟡 Seras redirecionado para o Binance Pay</p>
         <p>Aceita USDT, BNB e outras criptomoedas</p>
+        <p style="color:#A855F7; margin-top:10px;">Total: <strong id="total-usd-checkout">$9.99</strong></p>
       </div>
     </div>
 
     <button class="btn-submit" onclick="processarPagamento()">Pagar Agora</button>
-    <p class="auth-link"><a href="../index.html">← Cancelar</a></p>
+    <p class="auth-link" style="margin-top:10px;"><a href="../index.html">← Cancelar</a></p>
     <div class="seguranca">🔒 Pagamento 100% seguro e encriptado</div>
   </div>
+
   <script src="app.js"></script>
+  <script>
+    let taxaCambio = 850;
+    let precoUSD = 9.99;
+
+    const precos = {
+      premium: { nome: "Premium Mensal", usd: 9.99 },
+      anual: { nome: "Premium Anual", usd: 79.99 }
+    };
+
+    async function buscarCambio() {
+      try {
+        const response = await fetch("https://api.exchangerate-api.com/v4/latest/USD");
+        const data = await response.json();
+        if (data.rates && data.rates.AOA) {
+          taxaCambio = data.rates.AOA;
+          document.getElementById("cambio-rate").textContent = "1 USD = " + taxaCambio.toFixed(0) + " Kz";
+        } else {
+          document.getElementById("cambio-rate").textContent = "1 USD ≈ " + taxaCambio + " Kz (estimado)";
+        }
+      } catch (erro) {
+        document.getElementById("cambio-rate").textContent = "1 USD ≈ " + taxaCambio + " Kz (estimado)";
+      }
+      atualizarKwanza();
+    }
+
+    function atualizarKwanza() {
+      const kwanza = (precoUSD * taxaCambio).toFixed(0);
+      document.getElementById("plano-kwanza").textContent = kwanza + " Kz";
+      const totalKwanza = document.getElementById("total-kwanza-checkout");
+      if (totalKwanza) totalKwanza.textContent = kwanza + " Kz";
+      const totalUSD = document.getElementById("total-usd-checkout");
+      if (totalUSD) totalUSD.textContent = "$" + precoUSD.toFixed(2);
+    }
+
+    function iniciarCheckout() {
+      const params = new URLSearchParams(window.location.search);
+      const plano = params.get("plano") || "premium";
+      const p = precos[plano] || precos.premium;
+      precoUSD = p.usd;
+      document.getElementById("plano-nome").textContent = p.nome;
+      document.getElementById("plano-preco").textContent = "$" + p.usd.toFixed(2);
+      document.getElementById("plano-total").textContent = "$" + p.usd.toFixed(2);
+    }
+
+    function formatarCartao(input) {
+      let valor = input.value.replace(/[^0-9]/g, "");
+      valor = valor.replace(/(.{4})/g, "$1 ").trim();
+      input.value = valor;
+    }
+
+    iniciarCheckout();
+    buscarCambio();
+  </script>
 </body>
-</html>
+</html>'''
+
+compras_html = '''<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minhas Compras — PromptsGambo</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="logo">⚡ PromptsGambo</div>
+    <div class="nav-links">
+      <a href="prompt.html">Prompts</a>
+      <a href="cliente.html">Minha Area</a>
+    </div>
+    <div class="nav-auth">
+      <span class="user-nome" id="user-nome">Ola</span>
+      <button class="btn-login" onclick="logout()">Sair</button>
+    </div>
+  </nav>
+
+  <div class="pagina-header">
+    <h1>Minhas Compras</h1>
+    <p>Historico de subscricoes e pagamentos</p>
+  </div>
+
+  <div class="dashboard">
+
+    <!-- PLANO ATIVO -->
+    <div class="subscricao-ativa">
+      <div class="sub-icon">⚡</div>
+      <div class="sub-info">
+        <h3>Plano Ativo: <span id="plano-ativo">Membro</span></h3>
+        <p id="plano-validade">Acesso a prompts gratuitos</p>
+      </div>
+      <a href="checkout.html?plano=premium">
+        <button class="btn-upgrade">⚡ Upgrade</button>
+      </a>
+    </div>
+
+    <!-- PROMPTS DESBLOQUEADOS -->
+    <div class="historico-section">
+      <h3>🔓 Prompts Desbloqueados</h3>
+      <div id="prompts-desbloqueados-lista">
+        <div class="historico-vazio" id="desbloqueados-vazio">
+          <div class="vazio-icon">🔒</div>
+          <p>Ainda nao desbloqueaste nenhum prompt premium</p>
+          <a href="prompt.html"><button class="btn-submit" style="margin-top:15px;">Ver Prompts</button></a>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTORICO DE PAGAMENTOS -->
+    <div class="historico-section">
+      <h3>💳 Historico de Pagamentos</h3>
+      <div id="historico-lista">
+        <div class="historico-vazio" id="historico-vazio">
+          <div class="vazio-icon">🛒</div>
+          <p>Ainda nao fizeste nenhuma compra</p>
+          <a href="checkout.html?plano=premium"><button class="btn-submit" style="margin-top:15px;">Ver Planos</button></a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer class="footer">
+    <p>© 2024 PromptsGambo. Todos os direitos reservados.</p>
+  </footer>
+
+  <script src="app.js"></script>
+  <script type="module" src="firebase.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const utilizador = JSON.parse(localStorage.getItem("utilizador"));
+      if (!utilizador) { window.location.href = "login-cliente.html"; return; }
+
+      document.getElementById("user-nome").textContent = "Ola, " + utilizador.nome;
+
+      const premium = localStorage.getItem("premium") === "true";
+      if (premium) {
+        document.getElementById("plano-ativo").textContent = "Premium";
+        document.getElementById("plano-validade").textContent = "Acesso a todos os prompts premium";
+      }
+
+      // Mostrar prompts desbloqueados
+      const desbloqueados = JSON.parse(localStorage.getItem("promptsDesbloqueados") || "[]");
+      const listaDesbloqueados = document.getElementById("prompts-desbloqueados-lista");
+      const vazioDesbloqueados = document.getElementById("desbloqueados-vazio");
+
+      if (desbloqueados.length > 0) {
+        vazioDesbloqueados.style.display = "none";
+        desbloqueados.forEach(id => {
+          const item = document.createElement("div");
+          item.style = "display:flex; justify-content:space-between; align-items:center; padding:12px 15px; border-bottom:1px solid rgba(45,45,58,0.5);";
+          item.innerHTML =
+            "<span>🔓 Prompt #" + id + "</span>" +
+            "<span class='badge-gratis'>Desbloqueado</span>";
+          listaDesbloqueados.appendChild(item);
+        });
+      }
+
+      // Historico de pagamentos do localStorage
+      const historico = JSON.parse(localStorage.getItem("historicoPagamentos") || "[]");
+      const listaHistorico = document.getElementById("historico-lista");
+      const vazioHistorico = document.getElementById("historico-vazio");
+
+      if (historico.length > 0) {
+        vazioHistorico.style.display = "none";
+        historico.forEach(h => {
+          const item = document.createElement("div");
+          item.style = "display:flex; justify-content:space-between; align-items:center; padding:12px 15px; border-bottom:1px solid rgba(45,45,58,0.5);";
+          item.innerHTML =
+            "<div>" +
+              "<strong style='font-size:14px;'>" + h.produto + "</strong>" +
+              "<p style='color:#aaa; font-size:12px;'>" + h.data + " — " + h.metodo + "</p>" +
+            "</div>" +
+            "<span class='badge-gratis'>" + h.valor + "</span>";
+          listaHistorico.appendChild(item);
+        });
+      }
+    });
+  </script>
+</body>
+</html>'''
+
+ficheiros = {
+  "prompts-ia-site/frontend/checkout.html": checkout_html,
+  "prompts-ia-site/frontend/compras.html": compras_html,
+}
+
+for caminho, conteudo in ficheiros.items():
+  with open(caminho, "w") as f:
+    f.write(conteudo)
+  print("✅ " + caminho)
+
+print("\n✅ checkout.html e compras.html atualizados!")
