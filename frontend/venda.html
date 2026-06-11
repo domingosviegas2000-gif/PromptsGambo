@@ -1,0 +1,232 @@
+venda_html = '''<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Desbloquear — PromptsGambo</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="pagina-auth">
+
+  <div class="checkout-box">
+    <a href="../index.html" class="logo-center">⚡ PromptsGambo</a>
+    <h2 id="venda-titulo">Desbloquear Prompt</h2>
+
+    <!-- INFO DO PRODUTO -->
+    <div class="resumo-plano">
+      <div id="produto-info" style="text-align:center; padding: 10px 0;">
+        <div id="produto-emoji" style="font-size:40px; margin-bottom:10px;">✨</div>
+        <h3 id="produto-nome" style="margin-bottom:8px;">Carregando...</h3>
+        <p id="produto-descricao" style="color:#aaa; font-size:13px;"></p>
+      </div>
+      <div class="resumo-linha">
+        <span>Preco (USD)</span>
+        <span id="preco-usd">$0.99</span>
+      </div>
+      <div class="resumo-linha">
+        <span>Cambio atual</span>
+        <span id="cambio-rate" style="color:#A855F7;">A carregar...</span>
+      </div>
+      <div class="resumo-linha total">
+        <span>Total (Kwanza)</span>
+        <span id="preco-kwanza" style="color:#A855F7;">A calcular...</span>
+      </div>
+    </div>
+
+    <!-- METODOS -->
+    <h3 class="metodo-titulo">Metodo de pagamento</h3>
+    <div class="metodos-grid">
+      <div class="metodo-card" onclick="selecionarMetodo(this, 'visa')">
+        <div class="metodo-icon">💳</div>
+        <div class="metodo-info">
+          <strong>Cartao Visa</strong>
+          <span>Pagamento em USD</span>
+        </div>
+      </div>
+      <div class="metodo-card" onclick="selecionarMetodo(this, 'multicaixa')">
+        <div class="metodo-icon">📱</div>
+        <div class="metodo-info">
+          <strong>Multicaixa Express</strong>
+          <span>Pagamento em Kwanza (AOA)</span>
+        </div>
+      </div>
+      <div class="metodo-card" onclick="selecionarMetodo(this, 'binance')">
+        <div class="metodo-icon">🟡</div>
+        <div class="metodo-info">
+          <strong>Binance Pay</strong>
+          <span>Crypto USDT, BNB</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- DETALHES VISA -->
+    <div class="metodo-detalhes" id="detalhes-visa" style="display:none">
+      <input type="text" placeholder="Nome no cartao" id="card-nome">
+      <input type="text" placeholder="Numero do cartao" id="card-numero" maxlength="19" oninput="formatarCartao(this)">
+      <div class="card-linha">
+        <input type="text" placeholder="MM/AA" id="card-validade" maxlength="5">
+        <input type="text" placeholder="CVV" id="card-cvv" maxlength="3">
+      </div>
+    </div>
+
+    <!-- DETALHES MULTICAIXA -->
+    <div class="metodo-detalhes" id="detalhes-multicaixa" style="display:none">
+      <div class="multicaixa-info">
+        <div class="multicaixa-steps">
+          <div class="step"><div class="step-num">1</div><p>Introduz o teu numero Multicaixa Express</p></div>
+          <div class="step"><div class="step-num">2</div><p>Recebes notificacao no telemovel</p></div>
+          <div class="step"><div class="step-num">3</div><p>Confirmas com o teu PIN</p></div>
+        </div>
+        <input type="tel" placeholder="Numero (9XX XXX XXX)" id="multicaixa-numero" maxlength="13">
+        <div style="text-align:center; color:#A855F7; font-size:14px; margin-top:10px;">
+          Total a pagar: <strong id="total-kwanza-display">A calcular...</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- DETALHES BINANCE -->
+    <div class="metodo-detalhes" id="detalhes-binance" style="display:none">
+      <div class="binance-info">
+        <p>🟡 Seras redirecionado para o Binance Pay</p>
+        <p>Aceita USDT, BNB e outras criptomoedas</p>
+        <p style="color:#A855F7; margin-top:10px;">Total: <strong id="total-usd-display">$0.99</strong></p>
+      </div>
+    </div>
+
+    <button class="btn-submit" onclick="processarVenda()">🔓 Desbloquear Agora</button>
+    <p class="auth-link" style="margin-top:10px;"><a href="javascript:history.back()">← Voltar</a></p>
+    <div class="seguranca">🔒 Pagamento 100% seguro e encriptado</div>
+  </div>
+
+  <script src="app.js"></script>
+  <script type="module" src="firebase.js"></script>
+  <script>
+    let precoUSD = 0.99;
+    let taxaCambio = 850; // Fallback: 1 USD = 850 AOA
+    let produtoId = null;
+    let tipoProduto = "prompt";
+    let metodoSelecionado = null;
+
+    // Prompts locais para referencia
+    const promptsRef = [
+      { id: "1", titulo: "Floresta Magica", emoji: "🌲", precoUSD: 0 },
+      { id: "2", titulo: "Cidade Cyberpunk", emoji: "🏙️", precoUSD: 0 },
+      { id: "3", titulo: "Guerreira Medieval", emoji: "⚔️", precoUSD: 0.99 },
+      { id: "4", titulo: "Oceano Profundo", emoji: "🌊", precoUSD: 0.99 },
+      { id: "5", titulo: "Dragao de Fogo", emoji: "🐉", precoUSD: 0 },
+      { id: "6", titulo: "Retrato Futurista", emoji: "🤖", precoUSD: 0.99 },
+      { id: "7", titulo: "Leao Majestoso", emoji: "🦁", precoUSD: 0 },
+      { id: "8", titulo: "Galaxia Espiral", emoji: "🌌", precoUSD: 0.99 },
+    ];
+
+    const cursoRef = {
+      basico: { titulo: "Curso Basico de Prompts", emoji: "🎨", precoUSD: 4.99 },
+      avancado: { titulo: "Curso Avancado Midjourney", emoji: "🚀", precoUSD: 9.99 },
+      video: { titulo: "Curso Video com IA", emoji: "🎬", precoUSD: 14.99 },
+    };
+
+    // Buscar taxa de cambio real
+    async function buscarCambio() {
+      try {
+        const response = await fetch("https://api.exchangerate-api.com/v4/latest/USD");
+        const data = await response.json();
+        if (data.rates && data.rates.AOA) {
+          taxaCambio = data.rates.AOA;
+          document.getElementById("cambio-rate").textContent = "1 USD = " + taxaCambio.toFixed(0) + " Kz";
+        } else {
+          document.getElementById("cambio-rate").textContent = "1 USD = " + taxaCambio + " Kz (estimado)";
+        }
+      } catch (erro) {
+        document.getElementById("cambio-rate").textContent = "1 USD = " + taxaCambio + " Kz (estimado)";
+      }
+      atualizarPrecos();
+    }
+
+    function atualizarPrecos() {
+      const kwanza = (precoUSD * taxaCambio).toFixed(0);
+      document.getElementById("preco-usd").textContent = "$" + precoUSD.toFixed(2);
+      document.getElementById("preco-kwanza").textContent = kwanza + " Kz";
+      const totalKwanza = document.getElementById("total-kwanza-display");
+      if (totalKwanza) totalKwanza.textContent = kwanza + " Kz";
+      const totalUSD = document.getElementById("total-usd-display");
+      if (totalUSD) totalUSD.textContent = "$" + precoUSD.toFixed(2);
+    }
+
+    function carregarProduto() {
+      const params = new URLSearchParams(window.location.search);
+      produtoId = params.get("id");
+      tipoProduto = params.get("tipo") || "prompt";
+
+      if (tipoProduto === "curso") {
+        const curso = cursoRef[produtoId];
+        if (curso) {
+          precoUSD = curso.precoUSD;
+          document.getElementById("venda-titulo").textContent = "Adquirir Curso";
+          document.getElementById("produto-emoji").textContent = curso.emoji;
+          document.getElementById("produto-nome").textContent = curso.titulo;
+          document.getElementById("produto-descricao").textContent = "Acesso completo e vitalicio ao curso";
+        }
+      } else {
+        const prompt = promptsRef.find(p => p.id === produtoId);
+        if (prompt) {
+          precoUSD = prompt.precoUSD || 0.99;
+          document.getElementById("produto-emoji").textContent = prompt.emoji;
+          document.getElementById("produto-nome").textContent = prompt.titulo;
+          document.getElementById("produto-descricao").textContent = "Acesso permanente a este prompt";
+        }
+      }
+      atualizarPrecos();
+    }
+
+    function selecionarMetodo(el, metodo) {
+      document.querySelectorAll(".metodo-card").forEach(c => c.classList.remove("selecionado"));
+      el.classList.add("selecionado");
+      metodoSelecionado = metodo;
+      document.querySelectorAll(".metodo-detalhes").forEach(d => d.style.display = "none");
+      document.getElementById("detalhes-" + metodo).style.display = "block";
+    }
+
+    function formatarCartao(input) {
+      let valor = input.value.replace(/[^0-9]/g, "");
+      valor = valor.replace(/(.{4})/g, "$1 ").trim();
+      input.value = valor;
+    }
+
+    async function processarVenda() {
+      if (!metodoSelecionado) { alert("Seleciona um metodo de pagamento!"); return; }
+
+      if (metodoSelecionado === "visa") {
+        const nome = document.getElementById("card-nome").value;
+        const numero = document.getElementById("card-numero").value;
+        if (!nome || !numero) { alert("Preenche os dados do cartao!"); return; }
+        alert("💳 Pagamento de $" + precoUSD.toFixed(2) + " processado!");
+      } else if (metodoSelecionado === "multicaixa") {
+        const numero = document.getElementById("multicaixa-numero").value;
+        if (!numero) { alert("Introduz o teu numero Multicaixa!"); return; }
+        const kwanza = (precoUSD * taxaCambio).toFixed(0);
+        alert("📱 Notificacao de " + kwanza + " Kz enviada para " + numero);
+      } else if (metodoSelecionado === "binance") {
+        alert("🟡 A redirecionar para Binance Pay — $" + precoUSD.toFixed(2));
+      }
+
+      // Desbloquear produto localmente
+      if (tipoProduto === "prompt" && produtoId) {
+        const desbloqueados = JSON.parse(localStorage.getItem("promptsDesbloqueados") || "[]");
+        if (!desbloqueados.includes(produtoId)) desbloqueados.push(produtoId);
+        localStorage.setItem("promptsDesbloqueados", JSON.stringify(desbloqueados));
+      }
+
+      setTimeout(() => { window.location.href = "cliente.html"; }, 2000);
+    }
+
+    // Iniciar
+    carregarProduto();
+    buscarCambio();
+  </script>
+</body>
+</html>'''
+
+with open("prompts-ia-site/frontend/venda.html", "w") as f:
+    f.write(venda_html)
+
+print("✅ venda.html criado com cambio em tempo real!")
