@@ -1,16 +1,22 @@
 admin_js = '''
-// ===== DADOS =====
-let prompts = [
-  { id: "1", titulo: "Floresta Magica", prompt: "Uma floresta magica ao por do sol, estilo fantasia, 4k", instrucoes: "Cola no Midjourney. Adiciona --ar 16:9 para widescreen.", categoria: "Natureza", emoji: "🌲", premium: false, likes: 24, precoUSD: 0 },
-  { id: "2", titulo: "Cidade Cyberpunk", prompt: "Cidade futurista a noite com luzes de neon, cyberpunk", instrucoes: "Ideal para Midjourney v6.", categoria: "Urbano", emoji: "🏙️", premium: false, likes: 41, precoUSD: 0 },
-  { id: "3", titulo: "Guerreira Medieval", prompt: "Retrato de guerreira medieval com armadura dourada", instrucoes: "Usa no Stable Diffusion.", categoria: "Fantasia", emoji: "⚔️", premium: true, likes: 89, precoUSD: 0.99 },
-  { id: "4", titulo: "Oceano Profundo", prompt: "Fundo do oceano com criaturas bioluminescentes, 8k", instrucoes: "Funciona no DALL-E 3.", categoria: "Natureza", emoji: "🌊", premium: true, likes: 67, precoUSD: 0.99 },
-  { id: "5", titulo: "Dragao de Fogo", prompt: "Dragao gigante a cuspir fogo sobre montanhas nevadas", instrucoes: "Melhor no Midjourney v6.", categoria: "Fantasia", emoji: "🐉", premium: false, likes: 112, precoUSD: 0 },
-  { id: "6", titulo: "Retrato Futurista", prompt: "Retrato de humano com implantes ciberneticos, neon", instrucoes: "Usa no Midjourney ou SDXL.", categoria: "Pessoas", emoji: "🤖", premium: true, likes: 55, precoUSD: 0.99 },
-  { id: "7", titulo: "Leao Majestoso", prompt: "Leao majestoso no savana ao por do sol, fotorrealista", instrucoes: "Excelente para DALL-E 3.", categoria: "Animais", emoji: "🦁", premium: false, likes: 33, precoUSD: 0 },
-  { id: "8", titulo: "Galaxia Espiral", prompt: "Galaxia espiral colorida no espaco profundo, nebulosa, 8k", instrucoes: "Adiciona nomes de nebulosas reais.", categoria: "Espaco", emoji: "🌌", premium: true, likes: 78, precoUSD: 0.99 },
-];
+// ===== FIREBASE =====
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 
+const firebaseConfig = {
+  apiKey: "AIzaSyCW6x9R-KnYLjXddeVQjiM8ax7NI5TEXXc",
+  authDomain: "promptsgambo.firebaseapp.com",
+  projectId: "promptsgambo",
+  storageBucket: "promptsgambo.firebasestorage.app",
+  messagingSenderId: "155138685854",
+  appId: "1:155138685854:web:7b505e42839033c230748f"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// ===== ESTADO =====
+let prompts = [];
 let categorias = [
   { id: "1", nome: "Natureza", emoji: "🌿" },
   { id: "2", nome: "Fantasia", emoji: "🧙" },
@@ -19,25 +25,17 @@ let categorias = [
   { id: "5", nome: "Animais", emoji: "🐾" },
   { id: "6", nome: "Espaco", emoji: "🚀" },
 ];
-
-let utilizadores = [
-  { id: "1", nome: "Joao Silva", email: "joao@email.com", plano: "Premium" },
-  { id: "2", nome: "Maria Santos", email: "maria@email.com", plano: "Gratis" },
-];
-
-let pagamentos = [
-  { id: "1", utilizador: "Joao Silva", produto: "Guerreira Medieval", metodo: "Visa", valor: "$0.99", estado: "pago" },
-  { id: "2", utilizador: "Pedro Costa", produto: "Curso Avancado", metodo: "Multicaixa", valor: "$9.99", estado: "pago" },
-];
-
+let utilizadores = [];
+let pagamentos = [];
 let afiliados = JSON.parse(localStorage.getItem("afiliados") || "[]");
 let promptEditandoId = null;
 let categoriaEditandoId = null;
 let imagemBase64 = null;
 
 // ===== INICIAR =====
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   verificarAdmin();
+  await carregarPromptsFirebase();
   carregarEstatisticas();
   carregarPrompts();
   preencherSelectCategorias();
@@ -50,14 +48,27 @@ function verificarAdmin() {
   }
 }
 
+// ===== CARREGAR PROMPTS DO FIREBASE =====
+async function carregarPromptsFirebase() {
+  try {
+    const q = query(collection(db, "prompts"), orderBy("dataCriacao", "desc"));
+    const snapshot = await getDocs(q);
+    prompts = [];
+    snapshot.forEach(d => {
+      prompts.push({ id: d.id, ...d.data() });
+    });
+    console.log("Prompts carregados do Firebase:", prompts.length);
+  } catch (erro) {
+    console.log("Erro ao carregar prompts:", erro.message);
+    prompts = [];
+  }
+}
+
 function carregarEstatisticas() {
   document.getElementById("total-utilizadores").textContent = utilizadores.length;
   document.getElementById("total-premium").textContent = utilizadores.filter(u => u.plano !== "Gratis").length;
   document.getElementById("total-prompts").textContent = prompts.length;
-  const receita = pagamentos.filter(p => p.estado === "pago").reduce((acc, p) => {
-    return acc + parseFloat(p.valor.replace("$",""));
-  }, 0);
-  document.getElementById("total-receita").textContent = "$" + receita.toFixed(2);
+  document.getElementById("total-receita").textContent = "$0.00";
 }
 
 // ===== SECOES =====
@@ -73,50 +84,61 @@ function mostrarSecao(secao) {
 function carregarPrompts() {
   const lista = document.getElementById("lista-prompts-admin");
   lista.innerHTML = "";
+
+  if (prompts.length === 0) {
+    lista.innerHTML = "<div style='text-align:center; padding:30px; color:#aaa;'>Nenhum prompt ainda. Clica em + Adicionar!</div>";
+    return;
+  }
+
   prompts.forEach(p => {
     const linha = document.createElement("div");
     linha.className = "tabela-linha";
     linha.innerHTML =
       "<span>" + (p.emoji || "✨") + " " + p.titulo + "</span>" +
-      "<span>" + p.categoria + "</span>" +
+      "<span>" + (p.categoria || "-") + "</span>" +
       "<span>" +
         "<span class='" + (p.premium ? "badge-premium" : "badge-gratis") + "'>" + (p.premium ? "Premium" : "Gratis") + "</span>" +
         (p.precoUSD > 0 ? "<span style='color:#A855F7; font-size:11px; margin-left:5px;'>$" + p.precoUSD + "</span>" : "") +
       "</span>" +
       "<span class='acoes'>" +
-        "<button class='btn-editar' onclick='editarPrompt(\"" + p.id + "\")'>✏️</button>" +
-        "<button class='btn-apagar' onclick='apagarPrompt(\"" + p.id + "\")'>🗑️</button>" +
+        "<button class='btn-editar' onclick='editarPrompt(\"" + p.id + "\")'>Editar</button>" +
+        "<button class='btn-apagar' onclick='apagarPrompt(\"" + p.id + "\")'>Apagar</button>" +
         "<button class='" + (p.premium ? "btn-tornar-gratis" : "btn-tornar-premium") + "' onclick='togglePremium(\"" + p.id + "\")'>" +
-          (p.premium ? "🔓" : "🔒") +
+          (p.premium ? "Tornar Gratis" : "Tornar Premium") +
         "</button>" +
       "</span>";
     lista.appendChild(linha);
   });
 
-  // Guardar no localStorage para app.js aceder
-  localStorage.setItem("promptsAdmin", JSON.stringify(prompts));
+  document.getElementById("total-prompts").textContent = prompts.length;
 }
 
-function togglePremium(id) {
+// ===== TOGGLE PREMIUM =====
+async function togglePremium(id) {
   const prompt = prompts.find(p => p.id === id);
-  if (prompt) {
+  if (!prompt) return;
+  try {
+    await updateDoc(doc(db, "prompts", id), { premium: !prompt.premium });
     prompt.premium = !prompt.premium;
     carregarPrompts();
-    alert(prompt.premium ? "🔒 Tornado Premium!" : "🔓 Tornado Gratis!");
+    alert(prompt.premium ? "Tornado Premium!" : "Tornado Gratis!");
+  } catch (erro) {
+    alert("Erro: " + erro.message);
   }
 }
 
+// ===== EDITAR PROMPT =====
 function editarPrompt(id) {
   const prompt = prompts.find(p => p.id === id);
   if (!prompt) return;
   promptEditandoId = id;
-  document.getElementById("prompt-titulo").value = prompt.titulo;
-  document.getElementById("prompt-texto").value = prompt.prompt;
+  document.getElementById("prompt-titulo").value = prompt.titulo || "";
+  document.getElementById("prompt-texto").value = prompt.prompt || "";
   document.getElementById("prompt-instrucoes").value = prompt.instrucoes || "";
   document.getElementById("prompt-emoji").value = prompt.emoji || "";
-  document.getElementById("prompt-categoria").value = prompt.categoria;
+  document.getElementById("prompt-categoria").value = prompt.categoria || "";
   document.getElementById("prompt-preco").value = prompt.precoUSD || 0;
-  document.getElementById("prompt-premium").checked = prompt.premium;
+  document.getElementById("prompt-premium").checked = prompt.premium || false;
   if (prompt.imagem) {
     const preview = document.getElementById("imagem-preview");
     preview.src = prompt.imagem;
@@ -127,15 +149,22 @@ function editarPrompt(id) {
   abrirModalPrompt();
 }
 
-function apagarPrompt(id) {
-  if (confirm("Apagar este prompt?")) {
+// ===== APAGAR PROMPT =====
+async function apagarPrompt(id) {
+  if (!confirm("Apagar este prompt?")) return;
+  try {
+    await deleteDoc(doc(db, "prompts", id));
     prompts = prompts.filter(p => p.id !== id);
     carregarPrompts();
     carregarEstatisticas();
+    alert("Prompt apagado!");
+  } catch (erro) {
+    alert("Erro: " + erro.message);
   }
 }
 
-function guardarPrompt() {
+// ===== GUARDAR PROMPT NO FIREBASE =====
+async function guardarPrompt() {
   const titulo = document.getElementById("prompt-titulo").value;
   const texto = document.getElementById("prompt-texto").value;
   const instrucoes = document.getElementById("prompt-instrucoes").value;
@@ -147,21 +176,31 @@ function guardarPrompt() {
 
   if (!titulo || !texto || !categoria) { alert("Preenche titulo, texto e categoria!"); return; }
 
-  if (promptEditandoId) {
-    const prompt = prompts.find(p => p.id === promptEditandoId);
-    if (prompt) Object.assign(prompt, { titulo, prompt: texto, instrucoes, emoji, categoria, precoUSD, premium, imagem: imagemUrl });
-    alert("✅ Prompt atualizado!");
-  } else {
-    const novoId = String(Date.now());
-    prompts.push({ id: novoId, titulo, prompt: texto, instrucoes, emoji, categoria, precoUSD, premium, likes: 0, imagem: imagemUrl });
-    alert("✅ Prompt adicionado!");
-  }
+  const dados = {
+    titulo, prompt: texto, instrucoes, emoji, categoria,
+    precoUSD, premium, imagem: imagemUrl, likes: 0,
+    dataCriacao: new Date().toISOString()
+  };
 
-  promptEditandoId = null;
-  imagemBase64 = null;
-  fecharModal();
-  carregarPrompts();
-  carregarEstatisticas();
+  try {
+    if (promptEditandoId) {
+      await updateDoc(doc(db, "prompts", promptEditandoId), dados);
+      const idx = prompts.findIndex(p => p.id === promptEditandoId);
+      if (idx >= 0) prompts[idx] = { id: promptEditandoId, ...dados };
+      alert("Prompt atualizado!");
+    } else {
+      const docRef = await addDoc(collection(db, "prompts"), dados);
+      prompts.unshift({ id: docRef.id, ...dados });
+      alert("Prompt adicionado! Ja aparece no site.");
+    }
+    promptEditandoId = null;
+    imagemBase64 = null;
+    fecharModal();
+    carregarPrompts();
+    carregarEstatisticas();
+  } catch (erro) {
+    alert("Erro ao guardar: " + erro.message);
+  }
 }
 
 // ===== IMAGEM =====
@@ -212,8 +251,8 @@ function carregarCategorias() {
       "<span>" + c.emoji + " " + c.nome + "</span>" +
       "<span>" + prompts.filter(p => p.categoria === c.nome).length + " prompts</span>" +
       "<span class='acoes'>" +
-        "<button class='btn-editar' onclick='editarCategoria(\"" + c.id + "\")'>✏️</button>" +
-        "<button class='btn-apagar' onclick='apagarCategoria(\"" + c.id + "\")'>🗑️</button>" +
+        "<button class='btn-editar' onclick='editarCategoria(\"" + c.id + "\")'>Editar</button>" +
+        "<button class='btn-apagar' onclick='apagarCategoria(\"" + c.id + "\")'>Apagar</button>" +
       "</span>";
     lista.appendChild(item);
   });
@@ -256,16 +295,14 @@ function guardarCategoria() {
   const nome = document.getElementById("cat-nome").value;
   const emoji = document.getElementById("cat-emoji").value || "📁";
   if (!nome) { alert("Escreve o nome da categoria!"); return; }
-
   if (categoriaEditandoId) {
     const cat = categorias.find(c => c.id === categoriaEditandoId);
     if (cat) Object.assign(cat, { nome, emoji });
-    alert("✅ Categoria atualizada!");
+    alert("Categoria atualizada!");
   } else {
     categorias.push({ id: String(Date.now()), nome, emoji });
-    alert("✅ Categoria adicionada!");
+    alert("Categoria adicionada!");
   }
-
   categoriaEditandoId = null;
   fecharModalCategoria();
   carregarCategorias();
@@ -275,50 +312,17 @@ function guardarCategoria() {
 // ===== UTILIZADORES =====
 function carregarUtilizadores() {
   const lista = document.getElementById("lista-utilizadores-admin");
-  lista.innerHTML = "";
-  utilizadores.forEach(u => {
-    const linha = document.createElement("div");
-    linha.className = "tabela-linha";
-    linha.innerHTML =
-      "<span>" + u.nome + "</span>" +
-      "<span>" + u.email + "</span>" +
-      "<span class='" + (u.plano !== "Gratis" ? "badge-premium" : "badge-gratis") + "'>" + u.plano + "</span>" +
-      "<span><button class='btn-apagar' onclick='apagarUtilizador(\"" + u.id + "\")'>🗑️</button></span>";
-    lista.appendChild(linha);
-  });
+  lista.innerHTML = "<div style='text-align:center; padding:20px; color:#aaa;'>A carregar utilizadores...</div>";
 }
 
-function apagarUtilizador(id) {
-  if (confirm("Remover utilizador?")) {
-    utilizadores = utilizadores.filter(u => u.id !== id);
-    carregarUtilizadores();
-    carregarEstatisticas();
-  }
-}
-
-// ===== PAGAMENTOS =====
 function carregarPagamentos() {
   const lista = document.getElementById("lista-pagamentos-admin");
-  lista.innerHTML = "";
-  pagamentos.forEach(p => {
-    const linha = document.createElement("div");
-    linha.className = "tabela-linha";
-    linha.innerHTML =
-      "<span>" + p.utilizador + "</span>" +
-      "<span>" + p.produto + "</span>" +
-      "<span>" + p.metodo + "</span>" +
-      "<span class='" + (p.estado === "pago" ? "badge-gratis" : "badge-pendente") + "'>" + p.estado + "</span>";
-    lista.appendChild(linha);
-  });
+  lista.innerHTML = "<div style='text-align:center; padding:20px; color:#aaa;'>A carregar pagamentos...</div>";
 }
 
 // ===== EXPORTAR JSON =====
 function exportarJSON() {
-  const dados = {
-    prompts: prompts,
-    categorias: categorias,
-    exportado: new Date().toISOString()
-  };
+  const dados = { prompts, categorias, exportado: new Date().toISOString() };
   const blob = new Blob([JSON.stringify(dados, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -326,7 +330,7 @@ function exportarJSON() {
   a.download = "promptsgambo-export-" + Date.now() + ".json";
   a.click();
   URL.revokeObjectURL(url);
-  alert("✅ Exportado com sucesso!");
+  alert("Exportado com sucesso!");
 }
 
 // ===== IMPORTAR JSON =====
@@ -334,23 +338,25 @@ function importarJSON(event) {
   const file = event.target.files[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = function(e) {
+  reader.onload = async function(e) {
     try {
       const dados = JSON.parse(e.target.result);
       if (dados.prompts && Array.isArray(dados.prompts)) {
-        if (confirm("Importar " + dados.prompts.length + " prompts? Isto vai substituir os prompts atuais.")) {
-          prompts = dados.prompts;
-          if (dados.categorias) categorias = dados.categorias;
+        if (confirm("Importar " + dados.prompts.length + " prompts para o Firebase?")) {
+          for (const p of dados.prompts) {
+            const { id, ...dadosSemId } = p;
+            dadosSemId.dataCriacao = dadosSemId.dataCriacao || new Date().toISOString();
+            await addDoc(collection(db, "prompts"), dadosSemId);
+          }
+          await carregarPromptsFirebase();
           carregarPrompts();
-          carregarEstatisticas();
-          preencherSelectCategorias();
-          alert("✅ " + prompts.length + " prompts importados!");
+          alert(dados.prompts.length + " prompts importados para o Firebase!");
         }
       } else {
-        alert("❌ Ficheiro invalido!");
+        alert("Ficheiro invalido!");
       }
     } catch (erro) {
-      alert("❌ Erro ao ler ficheiro: " + erro.message);
+      alert("Erro: " + erro.message);
     }
   };
   reader.readAsText(file);
@@ -363,7 +369,7 @@ function guardarAnuncio() {
   if (!codigo) { alert("Cola o codigo do anuncio!"); return; }
   localStorage.setItem("anuncio_codigo", codigo);
   localStorage.setItem("anuncio_posicao", posicao);
-  alert("✅ Anuncio guardado! Sera exibido na posicao: " + posicao);
+  alert("Anuncio guardado na posicao: " + posicao);
 }
 
 function guardarAfiliado() {
@@ -377,7 +383,7 @@ function guardarAfiliado() {
   document.getElementById("afiliado-nome").value = "";
   document.getElementById("afiliado-link").value = "";
   document.getElementById("afiliado-comissao").value = "";
-  alert("✅ Link de afiliado adicionado!");
+  alert("Link de afiliado adicionado!");
 }
 
 function carregarAfiliados() {
@@ -390,9 +396,9 @@ function carregarAfiliados() {
     item.innerHTML =
       "<div>" +
         "<strong style='font-size:14px;'>" + a.nome + "</strong>" +
-        "<p style='color:#A855F7; font-size:12px;'>" + a.comissao + " comissao</p>" +
+        "<p style='color:#A855F7; font-size:12px;'>" + (a.comissao || "") + " comissao</p>" +
       "</div>" +
-      "<button class='btn-apagar' onclick='apagarAfiliado(\"" + a.id + "\")'>🗑️</button>";
+      "<button class='btn-apagar' onclick='apagarAfiliado(\"" + a.id + "\")'>Apagar</button>";
     lista.appendChild(item);
   });
 }
@@ -417,6 +423,7 @@ function fecharModal() {
   imagemBase64 = null;
   const preview = document.getElementById("imagem-preview");
   if (preview) preview.style.display = "none";
+  document.getElementById("prompt-imagem-url").value = "";
 }
 
 // ===== LOGOUT =====
@@ -424,9 +431,31 @@ function logoutAdmin() {
   localStorage.removeItem("adminLogado");
   window.location.href = "login.html";
 }
+
+// Expor funcoes globais
+window.mostrarSecao = mostrarSecao;
+window.abrirModalPrompt = abrirModalPrompt;
+window.fecharModal = fecharModal;
+window.guardarPrompt = guardarPrompt;
+window.editarPrompt = editarPrompt;
+window.apagarPrompt = apagarPrompt;
+window.togglePremium = togglePremium;
+window.abrirModalCategoria = abrirModalCategoria;
+window.fecharModalCategoria = fecharModalCategoria;
+window.guardarCategoria = guardarCategoria;
+window.editarCategoria = editarCategoria;
+window.apagarCategoria = apagarCategoria;
+window.guardarAnuncio = guardarAnuncio;
+window.guardarAfiliado = guardarAfiliado;
+window.apagarAfiliado = apagarAfiliado;
+window.exportarJSON = exportarJSON;
+window.importarJSON = importarJSON;
+window.previewImagem = previewImagem;
+window.previewUrl = previewUrl;
+window.logoutAdmin = logoutAdmin;
 '''
 
 with open("prompts-ia-site/frontend/admin.js", "w") as f:
     f.write(admin_js)
 
-print("✅ admin.js completo criado!")
+print("✅ admin.js atualizado com Firebase!")
