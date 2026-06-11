@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+cliente_html = '''<!DOCTYPE html>
 <html lang="pt">
 <head>
   <meta charset="UTF-8">
@@ -7,44 +7,148 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
   <nav class="navbar">
     <div class="logo">⚡ PromptsGambo</div>
     <div class="nav-links">
       <a href="prompt.html">Prompts</a>
-      <a href="compras.html">Minhas Compras</a>
+      <a href="compras.html">Compras</a>
     </div>
     <div class="nav-auth">
-      <span class="user-nome" id="user-nome">Ola, Utilizador</span>
+      <span class="user-nome" id="user-nome">Ola</span>
       <button class="btn-login" onclick="logout()">Sair</button>
     </div>
   </nav>
 
+  <div class="pagina-header">
+    <h1 id="user-nome-display">Bem-vindo</h1>
+    <p id="user-email-display">email@exemplo.com</p>
+    <span class="user-plano" id="user-plano">Membro</span>
+  </div>
+
   <div class="dashboard">
-    <div class="user-card">
-      <div class="user-avatar">👤</div>
-      <div class="user-info">
-        <h2 id="user-nome-display">Nome</h2>
-        <p id="user-email-display">email@exemplo.com</p>
-        <span class="user-plano" id="user-plano">Plano Gratis</span>
-      </div>
-      <button class="btn-upgrade" onclick="window.location.href='checkout.html?plano=premium'">⚡ Upgrade Premium</button>
-    </div>
 
+    <!-- ESTATISTICAS -->
     <div class="stats-grid">
-      <div class="stat-card"><div class="stat-numero" id="total-copiados">0</div><div class="stat-label">Prompts Copiados</div></div>
-      <div class="stat-card"><div class="stat-numero" id="total-favoritos">0</div><div class="stat-label">Favoritos</div></div>
-      <div class="stat-card"><div class="stat-numero" id="dias-membro">0</div><div class="stat-label">Dias como Membro</div></div>
-    </div>
-
-    <div class="acoes-rapidas">
-      <h3>Acoes Rapidas</h3>
-      <div class="acoes-grid">
-        <a href="prompt.html" class="acao-card"><div class="acao-icon">🎨</div><span>Ver Prompts</span></a>
-        <a href="compras.html" class="acao-card"><div class="acao-icon">🛒</div><span>Compras</span></a>
-        <a href="checkout.html?plano=premium" class="acao-card"><div class="acao-icon">⚡</div><span>Upgrade</span></a>
-        <a href="#" class="acao-card" onclick="logout()"><div class="acao-icon">🚪</div><span>Sair</span></a>
+      <div class="stat-card">
+        <div class="stat-numero" id="total-copiados">0</div>
+        <div class="stat-label">Prompts Copiados</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-numero" id="total-favoritos">0</div>
+        <div class="stat-label">Favoritos</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-numero" id="dias-membro">0</div>
+        <div class="stat-label">Dias como Membro</div>
       </div>
     </div>
+
+    <!-- TABS -->
+    <div class="dashboard-tabs">
+      <button class="tab-btn active" onclick="mostrarTab('prompts')">🎨 Prompts</button>
+      <button class="tab-btn" onclick="mostrarTab('favoritos')">❤️ Favoritos</button>
+      <button class="tab-btn" onclick="mostrarTab('cursos')">📚 Cursos</button>
+      <button class="tab-btn" onclick="mostrarTab('comunidade')">👥 Comunidade</button>
+      <button class="tab-btn" onclick="mostrarTab('perfil')">👤 Perfil</button>
+    </div>
+
+    <!-- TAB PROMPTS -->
+    <div class="tab-content ativo" id="tab-prompts">
+      <div class="pesquisa-bar" style="padding: 0 0 20px 0;">
+        <input type="text" placeholder="🔍 Pesquisar prompts..." id="pesquisa-cliente" oninput="pesquisarCliente()">
+      </div>
+      <div class="categorias" style="padding: 0 0 15px 0;">
+        <button class="cat active" onclick="filtrarCliente(this, 'todos')">✨ Todos</button>
+        <button class="cat" onclick="filtrarCliente(this, 'Natureza')">🌿 Natureza</button>
+        <button class="cat" onclick="filtrarCliente(this, 'Fantasia')">🧙 Fantasia</button>
+        <button class="cat" onclick="filtrarCliente(this, 'Urbano')">🏙️ Urbano</button>
+        <button class="cat" onclick="filtrarCliente(this, 'Pessoas')">👤 Pessoas</button>
+        <button class="cat" onclick="filtrarCliente(this, 'Animais')">🐾 Animais</button>
+        <button class="cat" onclick="filtrarCliente(this, 'Espaco')">🚀 Espaco</button>
+      </div>
+      <div class="prompts-grid" id="prompts-cliente" style="padding: 0;"></div>
+    </div>
+
+    <!-- TAB FAVORITOS -->
+    <div class="tab-content" id="tab-favoritos">
+      <div class="prompts-grid" id="prompts-favoritos" style="padding: 0;"></div>
+      <div id="favoritos-vazio" style="text-align:center; padding: 40px; color: #aaa; display:none;">
+        <div style="font-size: 50px; margin-bottom: 15px;">❤️</div>
+        <p>Ainda nao tens favoritos. Clica no ❤️ nos prompts!</p>
+      </div>
+    </div>
+
+    <!-- TAB CURSOS -->
+    <div class="tab-content" id="tab-cursos">
+      <div class="planos-grid">
+        <div class="plano-card">
+          <div class="card-emoji">🎨</div>
+          <h3>Curso Basico de Prompts</h3>
+          <p style="color:#aaa; font-size:14px; margin: 10px 0;">Aprende a criar prompts eficazes para qualquer IA de imagem.</p>
+          <div class="preco">$4.99</div>
+          <button class="btn-plano destaque-btn" onclick="abrirVendaCurso('basico')">Adquirir Curso</button>
+        </div>
+        <div class="plano-card destaque">
+          <div class="popular">MAIS POPULAR</div>
+          <div class="card-emoji">🚀</div>
+          <h3>Curso Avancado Midjourney</h3>
+          <p style="color:#aaa; font-size:14px; margin: 10px 0;">Domina o Midjourney com tecnicas profissionais e parametros avancados.</p>
+          <div class="preco">$9.99</div>
+          <button class="btn-plano destaque-btn" onclick="abrirVendaCurso('avancado')">Adquirir Curso</button>
+        </div>
+        <div class="plano-card">
+          <div class="card-emoji">🎬</div>
+          <h3>Curso Video com IA</h3>
+          <p style="color:#aaa; font-size:14px; margin: 10px 0;">Cria videos cinematograficos com SORA, Runway e Pika Labs.</p>
+          <div class="preco">$14.99</div>
+          <button class="btn-plano destaque-btn" onclick="abrirVendaCurso('video')">Adquirir Curso</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB COMUNIDADE -->
+    <div class="tab-content" id="tab-comunidade">
+      <div class="subscricao-ativa">
+        <div class="sub-icon">👥</div>
+        <div class="sub-info">
+          <h3>Comunidade PromptsGambo</h3>
+          <p>Junta-te a criadores de todo o mundo. Partilha prompts, recebe feedback e aprende com os melhores.</p>
+        </div>
+      </div>
+      <div class="planos-grid">
+        <div class="plano-card destaque">
+          <div class="popular">EM BREVE</div>
+          <div class="card-emoji">💬</div>
+          <h3>Discord da Comunidade</h3>
+          <p style="color:#aaa; font-size:14px; margin: 10px 0;">Canal exclusivo para membros com desafios semanais e feedback.</p>
+          <button class="btn-plano" disabled>Em breve</button>
+        </div>
+        <div class="plano-card">
+          <div class="card-emoji">🏆</div>
+          <h3>Desafios Semanais</h3>
+          <p style="color:#aaa; font-size:14px; margin: 10px 0;">Participa em desafios e ganha prompts exclusivos.</p>
+          <button class="btn-plano" disabled>Em breve</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB PERFIL -->
+    <div class="tab-content" id="tab-perfil">
+      <div class="auth-box" style="max-width:500px; margin: 0;">
+        <h2 style="margin-bottom:25px;">✏️ Editar Perfil</h2>
+        <input type="text" placeholder="Nome" id="perfil-nome">
+        <input type="email" placeholder="Email" id="perfil-email" disabled style="opacity:0.5;">
+        <input type="password" placeholder="Nova Password (opcional)" id="perfil-password">
+        <input type="password" placeholder="Confirmar Nova Password" id="perfil-confirmar">
+        <button class="btn-submit" onclick="guardarPerfil()">Guardar Alteracoes</button>
+        <hr style="border-color: rgba(45,45,58,0.5); margin: 20px 0;">
+        <h3 style="margin-bottom:15px; font-size:16px;">Compras e Subscricoes</h3>
+        <a href="compras.html"><button class="btn-plano" style="margin-bottom:10px;">Ver Historico de Compras</button></a>
+        <button class="btn-apagar" style="width:100%; padding:12px; border-radius:8px; margin-top:10px;" onclick="logout()">Terminar Sessao</button>
+      </div>
+    </div>
+
   </div>
 
   <footer class="footer">
@@ -52,5 +156,81 @@
   </footer>
 
   <script src="app.js"></script>
+  <script type="module" src="firebase.js"></script>
+  <script>
+    // Filtros no painel do cliente
+    let categoriaCliente = "todos";
+
+    function filtrarCliente(el, categoria) {
+      document.querySelectorAll(".cat").forEach(c => c.classList.remove("active"));
+      el.classList.add("active");
+      categoriaCliente = categoria;
+      aplicarFiltrosCliente();
+    }
+
+    function pesquisarCliente() { aplicarFiltrosCliente(); }
+
+    function aplicarFiltrosCliente() {
+      const input = document.getElementById("pesquisa-cliente");
+      const pesquisa = input ? input.value.toLowerCase() : "";
+      let lista = window.todosPrompts || [];
+      if (categoriaCliente !== "todos") lista = lista.filter(p => p.categoria === categoriaCliente);
+      if (pesquisa) lista = lista.filter(p =>
+        p.titulo.toLowerCase().includes(pesquisa) ||
+        p.prompt.toLowerCase().includes(pesquisa)
+      );
+      const grid = document.getElementById("prompts-cliente");
+      if (grid) {
+        // Rerenderizar com lista filtrada
+        window.renderizarPromptsNaGrid(lista, "prompts-cliente");
+      }
+    }
+
+    function mostrarTab(tab) {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("ativo"));
+      document.getElementById("tab-" + tab).classList.add("ativo");
+      event.target.classList.add("active");
+
+      if (tab === "favoritos") mostrarFavoritos();
+    }
+
+    function mostrarFavoritos() {
+      const likes = JSON.parse(localStorage.getItem("likes")) || [];
+      const todos = window.todosPrompts || [];
+      const favoritos = todos.filter(p => likes.includes(String(p.id)));
+      const grid = document.getElementById("prompts-favoritos");
+      const vazio = document.getElementById("favoritos-vazio");
+      if (favoritos.length === 0) {
+        if (grid) grid.innerHTML = "";
+        if (vazio) vazio.style.display = "block";
+      } else {
+        if (vazio) vazio.style.display = "none";
+        if (grid) window.renderizarPromptsNaGrid(favoritos, "prompts-favoritos");
+      }
+    }
+
+    function guardarPerfil() {
+      const nome = document.getElementById("perfil-nome").value;
+      const password = document.getElementById("perfil-password").value;
+      const confirmar = document.getElementById("perfil-confirmar").value;
+      if (password && password !== confirmar) { alert("As passwords nao coincidem!"); return; }
+      if (nome) {
+        const utilizador = JSON.parse(localStorage.getItem("utilizador")) || {};
+        utilizador.nome = nome;
+        localStorage.setItem("utilizador", JSON.stringify(utilizador));
+      }
+      alert("✅ Perfil atualizado!");
+    }
+
+    function abrirVendaCurso(curso) {
+      window.location.href = "venda.html?tipo=curso&id=" + curso;
+    }
+  </script>
 </body>
-</html>
+</html>'''
+
+with open("prompts-ia-site/frontend/cliente.html", "w") as f:
+    f.write(cliente_html)
+
+print("✅ cliente.html criado com painel completo!")
