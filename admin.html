@@ -1,0 +1,373 @@
+admin_html = '''<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel Admin — PromptsGambo</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .admin-menu { display:flex; gap:4px; flex-wrap:wrap; margin-bottom:20px; }
+    .menu-btn {
+      background:rgba(28,28,36,0.8); border:1px solid rgba(45,45,58,1);
+      color:#aaa; padding:8px 16px; border-radius:8px; cursor:pointer;
+      font-size:13px; font-family:"Space Grotesk",sans-serif; transition:all 0.2s;
+    }
+    .menu-btn:hover, .menu-btn.active {
+      background:linear-gradient(90deg,#e50914,#A855F7);
+      color:#fff; border-color:transparent;
+    }
+    .dashboard-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-bottom:20px; }
+    .dash-card {
+      background:rgba(28,28,36,0.6); backdrop-filter:blur(12px);
+      border:1px solid rgba(45,45,58,0.8); border-radius:12px; padding:20px; text-align:center;
+    }
+    .dash-card .numero { font-size:28px; font-weight:700; background:linear-gradient(90deg,#e50914,#A855F7); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .dash-card .label { color:#aaa; font-size:12px; margin-top:5px; }
+    .atividade-item { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid rgba(45,45,58,0.5); font-size:14px; }
+    .atividade-item:last-child { border-bottom:none; }
+    .badge-status { font-size:11px; padding:3px 8px; border-radius:20px; font-weight:700; }
+    .status-pendente { background:rgba(245,158,11,0.2); border:1px solid #f59e0b; color:#f59e0b; }
+    .status-aprovado { background:rgba(34,197,94,0.2); border:1px solid #22c55e; color:#22c55e; }
+    .status-rejeitado { background:rgba(229,9,20,0.2); border:1px solid #e50914; color:#e50914; }
+    .preview-slider { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:15px; }
+    .preview-btn { background:rgba(28,28,36,0.8); border:1px solid rgba(45,45,58,1); color:#aaa; padding:6px 12px; border-radius:8px; cursor:pointer; font-size:12px; font-family:"Space Grotesk",sans-serif; }
+    .preview-btn.active { background:linear-gradient(90deg,#e50914,#A855F7); color:#fff; border-color:transparent; }
+    .acesso-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:15px; }
+    .acesso-btn { background:rgba(28,28,36,0.8); border:2px solid rgba(45,45,58,1); color:#aaa; padding:10px; border-radius:8px; cursor:pointer; font-size:13px; text-align:center; font-family:"Space Grotesk",sans-serif; }
+    .acesso-btn.active { border-color:#A855F7; color:#A855F7; background:rgba(168,85,247,0.1); }
+    .moderacao-acoes { display:flex; gap:8px; flex-wrap:wrap; }
+    .btn-aprovar { background:rgba(34,197,94,0.2); border:1px solid #22c55e; color:#22c55e; padding:5px 12px; border-radius:6px; cursor:pointer; font-size:12px; }
+    .btn-rejeitar { background:rgba(229,9,20,0.2); border:1px solid #e50914; color:#e50914; padding:5px 12px; border-radius:6px; cursor:pointer; font-size:12px; }
+    .btn-destacar { background:rgba(168,85,247,0.2); border:1px solid #A855F7; color:#A855F7; padding:5px 12px; border-radius:6px; cursor:pointer; font-size:12px; }
+    .btn-suspender { background:rgba(245,158,11,0.2); border:1px solid #f59e0b; color:#f59e0b; padding:5px 12px; border-radius:6px; cursor:pointer; font-size:12px; }
+    .utilizador-card { background:rgba(28,28,36,0.6); border:1px solid rgba(45,45,58,0.8); border-radius:8px; padding:15px; margin-bottom:8px; }
+    .utilizador-card .u-header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:8px; }
+    .utilizador-card .u-acoes { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+    .search-bar { width:100%; background:rgba(7,7,12,0.8); border:1px solid rgba(45,45,58,1); color:#fff; padding:10px 15px; border-radius:8px; font-size:14px; font-family:"Space Grotesk",sans-serif; margin-bottom:15px; }
+    .search-bar:focus { outline:none; border-color:#A855F7; }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar admin-nav">
+    <div class="logo">PromptsGambo <span class="admin-badge">ADMIN</span></div>
+    <div class="nav-links">
+      <a href="prompt.html" target="_blank">Ver Site</a>
+    </div>
+    <div class="nav-auth">
+      <button class="btn-login" onclick="logoutAdmin()">Sair</button>
+    </div>
+  </nav>
+
+  <div class="dashboard">
+
+    <!-- MENU PRINCIPAL -->
+    <div class="admin-menu">
+      <button class="menu-btn active" onclick="mostrarSecao('dashboard', this)">Dashboard</button>
+      <button class="menu-btn" onclick="mostrarSecao('prompts', this)">Prompts</button>
+      <button class="menu-btn" onclick="mostrarSecao('utilizadores', this)">Utilizadores</button>
+      <button class="menu-btn" onclick="mostrarSecao('categorias', this)">Categorias</button>
+      <button class="menu-btn" onclick="mostrarSecao('aprovacoes', this)">Aprovacoes</button>
+      <button class="menu-btn" onclick="mostrarSecao('monetizacao', this)">Monetizacao</button>
+      <button class="menu-btn" onclick="mostrarSecao('configuracoes', this)">Configuracoes</button>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="secao-dashboard">
+      <div class="dashboard-cards">
+        <div class="dash-card"><div class="numero" id="d-utilizadores">0</div><div class="label">Utilizadores</div></div>
+        <div class="dash-card"><div class="numero" id="d-criadores">0</div><div class="label">Criadores</div></div>
+        <div class="dash-card"><div class="numero" id="d-prompts">0</div><div class="label">Prompts</div></div>
+        <div class="dash-card"><div class="numero" id="d-packs">0</div><div class="label">Packs</div></div>
+        <div class="dash-card"><div class="numero" id="d-vendas">0</div><div class="label">Vendas</div></div>
+        <div class="dash-card"><div class="numero" id="d-receita-dia">$0</div><div class="label">Receita Hoje</div></div>
+        <div class="dash-card"><div class="numero" id="d-receita-mes">$0</div><div class="label">Receita Mensal</div></div>
+        <div class="dash-card"><div class="numero" id="d-pendentes">0</div><div class="label">Pendentes</div></div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; flex-wrap:wrap;">
+        <div class="admin-secao" style="margin:0;">
+          <h3 style="margin-bottom:15px; font-size:16px; font-weight:700;">Ultimos Prompts</h3>
+          <div id="ultimos-prompts"></div>
+        </div>
+        <div class="admin-secao" style="margin:0;">
+          <h3 style="margin-bottom:15px; font-size:16px; font-weight:700;">Ultimos Utilizadores</h3>
+          <div id="ultimos-utilizadores"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROMPTS -->
+    <div id="secao-prompts" style="display:none;">
+      <div class="admin-secao">
+        <div class="secao-header">
+          <h3>Gerir Prompts</h3>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn-add" onclick="abrirModalPrompt()">+ Adicionar</button>
+            <button class="btn-add" style="background:linear-gradient(90deg,#2563eb,#A855F7)" onclick="exportarJSON()">Exportar</button>
+            <label class="btn-add" style="background:linear-gradient(90deg,#15803d,#A855F7); cursor:pointer;">
+              Importar<input type="file" accept=".json" onchange="importarJSON(event)" style="display:none;">
+            </label>
+          </div>
+        </div>
+        <input type="text" class="search-bar" placeholder="Pesquisar prompts..." id="pesquisa-prompts" oninput="pesquisarPrompts()">
+        <div style="display:flex; gap:8px; margin-bottom:15px; flex-wrap:wrap;">
+          <button class="preview-btn active" onclick="filtrarTipoPrompt(this,'todos')">Todos</button>
+          <button class="preview-btn" onclick="filtrarTipoPrompt(this,'gratis')">Gratis</button>
+          <button class="preview-btn" onclick="filtrarTipoPrompt(this,'premium')">Premium</button>
+          <button class="preview-btn" onclick="filtrarTipoPrompt(this,'pendente')">Pendentes</button>
+        </div>
+        <div class="admin-tabela">
+          <div class="tabela-header"><span>Titulo</span><span>Categoria</span><span>Tipo</span><span>Acoes</span></div>
+          <div id="lista-prompts-admin"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- UTILIZADORES -->
+    <div id="secao-utilizadores" style="display:none;">
+      <div class="admin-secao">
+        <div class="secao-header"><h3>Gerir Utilizadores</h3></div>
+        <input type="text" class="search-bar" placeholder="Pesquisar utilizadores..." id="pesquisa-utilizadores" oninput="pesquisarUtilizadores()">
+        <div style="display:flex; gap:8px; margin-bottom:15px; flex-wrap:wrap;">
+          <button class="preview-btn active" onclick="filtrarTipoUtilizador(this,'todos')">Todos</button>
+          <button class="preview-btn" onclick="filtrarTipoUtilizador(this,'premium')">Premium</button>
+          <button class="preview-btn" onclick="filtrarTipoUtilizador(this,'gratis')">Gratis</button>
+          <button class="preview-btn" onclick="filtrarTipoUtilizador(this,'suspenso')">Suspensos</button>
+        </div>
+        <div id="lista-utilizadores-admin"></div>
+      </div>
+    </div>
+
+    <!-- CATEGORIAS -->
+    <div id="secao-categorias" style="display:none;">
+      <div class="admin-secao">
+        <div class="secao-header">
+          <h3>Gerir Categorias</h3>
+          <button class="btn-add" onclick="abrirModalCategoria()">+ Adicionar</button>
+        </div>
+        <div class="admin-tabela">
+          <div class="tabela-header" style="grid-template-columns:1fr 1fr 1fr;"><span>Categoria</span><span>Prompts</span><span>Acoes</span></div>
+          <div id="lista-categorias"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- APROVACOES -->
+    <div id="secao-aprovacoes" style="display:none;">
+      <div class="admin-secao">
+        <div class="secao-header"><h3>Fila de Aprovacao</h3></div>
+        <div id="lista-aprovacoes">
+          <div style="text-align:center; padding:40px; color:#aaa;">
+            <div style="font-size:40px; margin-bottom:15px;">✅</div>
+            <p>Nenhum item pendente de aprovacao</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MONETIZACAO -->
+    <div id="secao-monetizacao" style="display:none;">
+      <div class="admin-secao">
+        <div class="secao-header"><h3>Monetizacao</h3></div>
+        <div class="auth-box" style="max-width:600px; margin:0;">
+          <h3 style="margin-bottom:15px; font-size:16px;">Anuncios</h3>
+          <textarea id="codigo-anuncio" rows="4" placeholder="Codigo do banner (Google AdSense, etc.)..."></textarea>
+          <select id="posicao-anuncio" style="margin-bottom:15px;">
+            <option value="topo">Topo da pagina</option>
+            <option value="meio">Entre os prompts</option>
+            <option value="rodape">Rodape</option>
+          </select>
+          <button class="btn-submit" onclick="guardarAnuncio()">Guardar Anuncio</button>
+          <hr style="border-color:rgba(45,45,58,0.5); margin:20px 0;">
+          <h3 style="margin-bottom:15px; font-size:16px;">Links de Afiliado</h3>
+          <input type="text" placeholder="Nome do produto" id="afiliado-nome">
+          <input type="url" placeholder="Link de afiliado" id="afiliado-link">
+          <input type="text" placeholder="Comissao (ex: 20%)" id="afiliado-comissao">
+          <button class="btn-submit" onclick="guardarAfiliado()">Adicionar Link</button>
+          <div id="lista-afiliados" style="margin-top:15px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONFIGURACOES -->
+    <div id="secao-configuracoes" style="display:none;">
+      <div class="admin-secao">
+        <div class="secao-header"><h3>Configuracoes da Plataforma</h3></div>
+        <div class="auth-box" style="max-width:600px; margin:0;">
+          <h3 style="margin-bottom:15px; font-size:16px;">Gerais</h3>
+          <input type="text" placeholder="Nome da plataforma" id="config-nome" value="PromptsGambo">
+          <select id="config-moeda">
+            <option value="USD">USD (Dolar)</option>
+            <option value="AOA">AOA (Kwanza)</option>
+            <option value="EUR">EUR (Euro)</option>
+          </select>
+          <hr style="border-color:rgba(45,45,58,0.5); margin:20px 0;">
+          <h3 style="margin-bottom:15px; font-size:16px;">Marketplace</h3>
+          <input type="number" placeholder="Comissao da plataforma (%)" id="config-comissao" value="20">
+          <input type="number" placeholder="Valor minimo de saque ($)" id="config-min-saque" value="10">
+          <hr style="border-color:rgba(45,45,58,0.5); margin:20px 0;">
+          <h3 style="margin-bottom:15px; font-size:16px;">Prompts</h3>
+          <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:15px;">
+            <label style="display:flex; align-items:center; gap:10px; color:#aaa; font-size:14px;"><input type="checkbox" id="config-gratis" checked> Permitir prompts gratuitos</label>
+            <label style="display:flex; align-items:center; gap:10px; color:#aaa; font-size:14px;"><input type="checkbox" id="config-pagos" checked> Permitir prompts pagos</label>
+            <label style="display:flex; align-items:center; gap:10px; color:#aaa; font-size:14px;"><input type="checkbox" id="config-preview" checked> Permitir pre-visualizacao</label>
+          </div>
+          <button class="btn-submit" onclick="guardarConfiguracoes()">Guardar Configuracoes</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- MODAL PROMPT -->
+  <div class="modal" id="modal-prompt">
+    <div class="modal-box" style="max-height:90vh; overflow-y:auto;">
+      <button class="fechar" onclick="fecharModal()">X</button>
+      <h2 id="modal-titulo">Adicionar Prompt</h2>
+
+      <input type="text" placeholder="Titulo" id="prompt-titulo">
+      <textarea placeholder="Texto completo do prompt" id="prompt-texto" rows="3"></textarea>
+      <textarea placeholder="Instrucoes de uso (passo a passo)" id="prompt-instrucoes" rows="3"></textarea>
+      <input type="text" placeholder="Ferramentas recomendadas (ex: Midjourney, DALL-E)" id="prompt-ferramentas">
+      <input type="text" placeholder="Tags (separadas por virgula)" id="prompt-tags">
+      <input type="text" placeholder="Emoji (ex: 🌲)" id="prompt-emoji">
+
+      <select id="prompt-categoria" style="margin-bottom:15px;">
+        <option value="">Seleciona categoria</option>
+      </select>
+
+      <label style="color:#aaa; font-size:13px; display:block; margin-bottom:8px;">Tipo de Acesso</label>
+      <div class="acesso-grid">
+        <button class="acesso-btn active" id="acesso-gratis" onclick="selecionarAcesso('gratis')">Gratis</button>
+        <button class="acesso-btn" id="acesso-pago" onclick="selecionarAcesso('pago')">Pago</button>
+        <button class="acesso-btn" id="acesso-premium" onclick="selecionarAcesso('premium')">Premium</button>
+        <button class="acesso-btn" id="acesso-privado" onclick="selecionarAcesso('privado')">Privado</button>
+      </div>
+
+      <input type="number" placeholder="Preco em USD (se pago)" id="prompt-preco" step="0.01" min="0" style="margin-bottom:15px;">
+
+      <label style="color:#aaa; font-size:13px; display:block; margin-bottom:8px;">Pre-visualizacao</label>
+      <div class="preview-slider" style="margin-bottom:15px;">
+        <button class="preview-btn active" id="prev-0" onclick="selecionarPreview(0)">Sem previa</button>
+        <button class="preview-btn" id="prev-20" onclick="selecionarPreview(20)">20%</button>
+        <button class="preview-btn" id="prev-50" onclick="selecionarPreview(50)">50%</button>
+        <button class="preview-btn" id="prev-desc" onclick="selecionarPreview('desc')">So descricao</button>
+      </div>
+
+      <label style="color:#aaa; font-size:13px; display:block; margin-bottom:8px;">Imagem</label>
+      <input type="file" accept="image/*" id="prompt-imagem" onchange="previewImagem(this)" style="color:#aaa; margin-bottom:8px;">
+      <img id="imagem-preview" style="width:100%; border-radius:8px; margin-bottom:8px; display:none;">
+      <input type="url" placeholder="Ou URL da imagem" id="prompt-imagem-url" oninput="previewUrl(this)" style="margin-bottom:15px;">
+
+      <div class="toggle-premium" style="margin-bottom:15px;">
+        <label style="color:#aaa; font-size:14px;">Destaque na homepage?</label>
+        <input type="checkbox" id="prompt-destaque">
+      </div>
+
+      <button class="btn-submit" onclick="guardarPrompt()">Guardar Prompt</button>
+    </div>
+  </div>
+
+  <!-- MODAL CATEGORIA -->
+  <div class="modal" id="modal-categoria">
+    <div class="modal-box">
+      <button class="fechar" onclick="fecharModalCategoria()">X</button>
+      <h2 id="modal-cat-titulo">Adicionar Categoria</h2>
+      <input type="text" placeholder="Nome da categoria" id="cat-nome">
+      <input type="text" placeholder="Emoji (ex: 🌿)" id="cat-emoji">
+      <input type="text" placeholder="Descricao (opcional)" id="cat-descricao">
+      <button class="btn-submit" onclick="guardarCategoria()">Guardar</button>
+    </div>
+  </div>
+
+  <!-- MODAL UTILIZADOR -->
+  <div class="modal" id="modal-utilizador">
+    <div class="modal-box">
+      <button class="fechar" onclick="fecharModalUtilizador()">X</button>
+      <h2>Editar Utilizador</h2>
+      <input type="text" placeholder="Nome" id="u-nome">
+      <input type="email" placeholder="Email" id="u-email" disabled style="opacity:0.5;">
+      <select id="u-plano" style="margin-bottom:15px;">
+        <option value="gratis">Gratis</option>
+        <option value="premium">Premium</option>
+        <option value="admin">Admin</option>
+      </select>
+      <select id="u-estado" style="margin-bottom:15px;">
+        <option value="ativo">Ativo</option>
+        <option value="suspenso">Suspenso</option>
+        <option value="bloqueado">Bloqueado</option>
+      </select>
+      <button class="btn-submit" onclick="guardarUtilizador()">Guardar</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay" onclick="fecharTodosModais()"></div>
+
+  <script type="module" src="admin.js"></script>
+  <script>
+    function mostrarSecao(secao, btn) {
+      document.querySelectorAll("[id^=secao-]").forEach(s => s.style.display = "none");
+      document.getElementById("secao-" + secao).style.display = "block";
+      document.querySelectorAll(".menu-btn").forEach(b => b.classList.remove("active"));
+      if (btn) btn.classList.add("active");
+    }
+
+    function selecionarAcesso(tipo) {
+      document.querySelectorAll(".acesso-btn").forEach(b => b.classList.remove("active"));
+      document.getElementById("acesso-" + tipo).classList.add("active");
+      window.tipoAcessoSelecionado = tipo;
+      const precoInput = document.getElementById("prompt-preco");
+      precoInput.style.display = (tipo === "pago") ? "block" : "none";
+      if (tipo !== "pago") precoInput.value = 0;
+    }
+
+    function selecionarPreview(valor) {
+      document.querySelectorAll(".preview-btn").forEach(b => b.classList.remove("active"));
+      const id = valor === "desc" ? "prev-desc" : "prev-" + valor;
+      const el = document.getElementById(id);
+      if (el) el.classList.add("active");
+      window.previewSelecionado = valor;
+    }
+
+    function filtrarTipoPrompt(btn, tipo) {
+      document.querySelectorAll("#secao-prompts .preview-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      window.filtroTipoPrompt = tipo;
+      if (window.carregarPrompts) window.carregarPrompts();
+    }
+
+    function filtrarTipoUtilizador(btn, tipo) {
+      document.querySelectorAll("#secao-utilizadores .preview-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      window.filtroTipoUtilizador = tipo;
+      if (window.carregarUtilizadoresFirebase) window.carregarUtilizadoresFirebase();
+    }
+
+    function fecharTodosModais() {
+      document.querySelectorAll(".modal").forEach(m => m.classList.remove("ativo"));
+      document.getElementById("overlay").classList.remove("ativo");
+    }
+
+    function fecharModalUtilizador() {
+      document.getElementById("modal-utilizador").classList.remove("ativo");
+      document.getElementById("overlay").classList.remove("ativo");
+    }
+
+    // Iniciar com preco oculto
+    window.addEventListener("load", () => {
+      const precoInput = document.getElementById("prompt-preco");
+      if (precoInput) precoInput.style.display = "none";
+      window.tipoAcessoSelecionado = "gratis";
+      window.previewSelecionado = 0;
+      window.filtroTipoPrompt = "todos";
+      window.filtroTipoUtilizador = "todos";
+    });
+  </script>
+</body>
+</html>'''
+
+with open("prompts-ia-site/frontend/admin.html", "w") as f:
+    f.write(admin_html)
+
+print("✅ admin.html Fase 1 criado!")
